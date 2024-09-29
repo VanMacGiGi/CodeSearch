@@ -61,12 +61,18 @@ void checkCondition(int x) {
         printf("x is equal to 5\n");
     } else {
         switch (x) {
-            case 1:
+            case 1: {
                 printf("x is 1\n");
                 break;
+            }
             case 2:
                 printf("x is 2\n");
                 break;
+            case 3:
+            {
+                printf("x is 3\n");
+                break;
+            }
             default:
                 printf("x is less than 5\n");
                 break;
@@ -83,4 +89,3 @@ int calculate(int a, int b)
     printf("Calculate sum\n");
     return a + b;
 }
-

@@ -72,6 +72,7 @@ function search_func() {
             NR <= line {
 
                 if (in_func_name == 1) {
+                    # Function prototype in multi-line
                     func_name = func_name "\n" FILENAME " +" FNR ":" $0;
                     if ($0 ~ /{/) {
                         in_func_name = 0;
@@ -92,32 +93,37 @@ function search_func() {
                         if (block_stack[block_stack_size - 1] ~ /if/) {
                             # if may continue
                             block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
-                            #print "Add "  block_stack[block_stack_size]
+                            #print "DB-Add "  block_stack[block_stack_size]
                             block_stack_size++;
                         }
-                        else if (block_stack[block_stack_size - 1] ~ /break/) {
-                            # remove switch block
-                            while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /break|case|default/)) {
-                                block_stack_size--;
-                                #print "Remove "  block_stack[block_stack_size]
+                        else if (block_stack[block_stack_size - 1] ~ /case|default/) {
+                            if (block_stack[block_stack_size - 1] ~ /{/) {
+                                block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
                             }
-                            block_stack_size--; # remove switch
-                            #print "Remove "  block_stack[block_stack_size]
+                            else {
+                                # remove switch block
+                                while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /break|case|default/)) {
+                                    block_stack_size--;
+                                    #print "DB-Remove case"  block_stack[block_stack_size]
+                                }
+                                block_stack_size--; # remove switch
+                                #print "DB-Remove switch"  block_stack[block_stack_size]
+                            }
                         }
                         else if (block_stack[block_stack_size - 1] ~ /else\s*{?\s*$/) {
                             # remove if block
                             while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}/)) {
                                 block_stack_size--;
-                                #print "Remove not if"  block_stack[block_stack_size];
+                                #print "DB-Remove not if"  block_stack[block_stack_size];
                                 if (block_stack[block_stack_size - 1] ~ /:\s*if\s*\(.*\)\s*{/) {
                                     block_stack_size--;
-                                    #print "Remove "  block_stack[block_stack_size];
+                                    #print "DB-Remove "  block_stack[block_stack_size];
                                 }
                             }
                         }
                         else {
                             block_stack_size--;
-                            #print "Remove "  block_stack[block_stack_size];
+                            #print "DB-Remove else "  block_stack[block_stack_size];
                         }
                     }
                 }
@@ -128,36 +134,46 @@ function search_func() {
                     # If previous is an if block and has }, end the if block
                     while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}\s*$/)) {
                         block_stack_size--;
-                        #print "Remove "  block_stack[block_stack_size];
+                        #print "DB-Remove "  block_stack[block_stack_size];
                         #if (block_stack[block_stack_size - 1] ~ /^\s*if\s*\(.*\)\s*{/) {
                         if (block_stack[block_stack_size - 1] ~ /:\s*if\s*\(.*\)\s*{/) {
                             block_stack_size--;
-                            #print "Remove "  block_stack[block_stack_size];
+                            #print "DB-Remove "  block_stack[block_stack_size];
                         }
                     }
 
                     block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
-                    #print "Add "  block_stack[block_stack_size]
+                    #print "DB-Add "  block_stack[block_stack_size]
                     block_stack_size++;
                 }
 
-                if ($0 ~ /case\s+.*:|default:|^\s*else\s*{?\s*$|break/) {
+                if ($0 ~ /^\s*{\s*$/ && block_stack_size > 0 && block_stack[block_stack_size - 1] !~ /{/) {
+                    #for syntax { not the same line with if, for, while, switch, case, default
+                    block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
+                }
+
+                if ($0 ~ /case\s+.*:|default:|^\s*else\s*{?\s*$/) {
                     block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
-                    #print "Add " block_stack[block_stack_size]
+                    #print "DB-Add " block_stack[block_stack_size]
                     block_stack_size++;
                 }
 
+                if ($0 ~ /break/ && block_stack[block_stack_size - 1] ~ /case|default/) {
+                    block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
+                }
                 if (NR == line) {
                     print func_name
                     if (block_stack[block_stack_size - 1] ~ /case/) {
                         i = block_stack_size - 2
-                        while (block_stack[i] ~ /(case|break)/) {
+                        while (block_stack[i] ~ /break/) {
                             block_stack[i] = "";
                             i--;
                         }
                     }
                     for (i = 0; i < block_stack_size; i++) {
-                        print block_stack[i];
+                        if (block_stack[i] != "") {
+                            print block_stack[i];
+                        }
                     }
                     sub(search_str, COLOR "&" NC, $0)
                     print FILENAME " +" FNR ":" $0;
