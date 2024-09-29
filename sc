@@ -66,11 +66,26 @@ function search_func() {
             awk -v line=$line_number -v COLOR="$COLOR" -v NC="$NC" -v search_str="$search_string" '
             BEGIN {
                 in_function = 0;
+                in_func_name = 0;
                 block_stack_size = 0;
             }
             NR <= line {
 
-                # End blocks
+                if (in_func_name == 1) {
+                    func_name = func_name "\n" FILENAME " +" FNR ":" $0;
+                    if ($0 ~ /{/) {
+                        in_func_name = 0;
+                    }
+                }
+                else if ($0 ~ /^[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)?\s*{?/) {
+                    in_function = 1;
+                    func_name = FILENAME " +" FNR ":" $0;
+                    if ($0 !~ /{/) {
+                        in_func_name = 1;
+                    }
+                }
+
+                # End block
                 if ($0 ~ /\s+}/) {
                     if (block_stack_size > 0) {
 
@@ -146,11 +161,6 @@ function search_func() {
                     }
                     sub(search_str, COLOR "&" NC, $0)
                     print FILENAME " +" FNR ":" $0;
-                }
-
-                if ($0 ~ /^[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)\s*{/) {
-                    in_function = 1;
-                    func_name = FILENAME " +" FNR ":" $0;
                 }
 
                 # End function of block when reach "}"

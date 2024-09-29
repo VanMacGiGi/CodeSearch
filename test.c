@@ -78,7 +78,9 @@ void checkCondition(int x) {
 }
 
 // Function to perform a simple calculation
-int calculate(int a, int b) {
+int calculate(int a, int b)
+{
+    printf("Calculate sum\n");
     return a + b;
 }
 
