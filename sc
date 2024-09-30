@@ -32,8 +32,8 @@ function search_struct() {
     #>};
 
     find $DIRECTORY -name "*.[ch]" | xargs \
-    awk -v string=$1 '/^\s*(typedef )?struct[^=]*{/, /}/ {
-        if (/^\s*(typedef )?struct[^=]*{/) {
+    awk -v string=$1 '/^[[:space:]]*(typedef )?struct[^=]*{/, /}/ {
+        if (/^[[:space:]]*(typedef )?struct[^=]*{/) {
             start_struct = "\n" FILENAME " +" FNR ":" $0
             has_string = 0
         } else if ($0 ~ string) {
@@ -78,7 +78,7 @@ function search_func() {
                         in_func_name = 0;
                     }
                 }
-                else if ($0 ~ /^[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)?\s*{?/) {
+                else if ($0 ~ /^[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]+[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(.*\)?[[:space:]]*{?/) {
                     in_function = 1;
                     func_name = FILENAME " +" FNR ":" $0;
                     if ($0 !~ /{/) {
@@ -87,7 +87,7 @@ function search_func() {
                 }
 
                 # End block
-                if ($0 ~ /\s+}/) {
+                if ($0 ~ /[[:space:]]+}/) {
                     if (block_stack_size > 0) {
 
                         if (block_stack[block_stack_size - 1] ~ /if/) {
@@ -110,12 +110,12 @@ function search_func() {
                                 #print "DB-Remove switch"  block_stack[block_stack_size]
                             }
                         }
-                        else if (block_stack[block_stack_size - 1] ~ /else\s*{?\s*$/) {
+                        else if (block_stack[block_stack_size - 1] ~ /else[[:space:]]*{?[[:space:]]*$/) {
                             # remove if block
                             while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}/)) {
                                 block_stack_size--;
                                 #print "DB-Remove not if"  block_stack[block_stack_size];
-                                if (block_stack[block_stack_size - 1] ~ /:\s*if\s*\(.*\)\s*{/) {
+                                if (block_stack[block_stack_size - 1] ~ /:[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
                                     block_stack_size--;
                                     #print "DB-Remove "  block_stack[block_stack_size];
                                 }
@@ -129,14 +129,14 @@ function search_func() {
                 }
 
                 # Start block
-                if ($0 ~ /^\s*(if|for|while|switch)\s*\(.*\)\s*{/) {
+                if ($0 ~ /^[[:space:]]*(if|for|while|switch)[[:space:]]*\(.*\)[[:space:]]*{/) {
 
                     # If previous is an if block and has }, end the if block
-                    while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}\s*$/)) {
+                    while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}[[:space:]]*$/)) {
                         block_stack_size--;
                         #print "DB-Remove "  block_stack[block_stack_size];
-                        #if (block_stack[block_stack_size - 1] ~ /^\s*if\s*\(.*\)\s*{/) {
-                        if (block_stack[block_stack_size - 1] ~ /:\s*if\s*\(.*\)\s*{/) {
+                        #if (block_stack[block_stack_size - 1] ~ /^[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
+                        if (block_stack[block_stack_size - 1] ~ /:[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
                             block_stack_size--;
                             #print "DB-Remove "  block_stack[block_stack_size];
                         }
@@ -147,12 +147,12 @@ function search_func() {
                     block_stack_size++;
                 }
 
-                if ($0 ~ /^\s*{\s*$/ && block_stack_size > 0 && block_stack[block_stack_size - 1] !~ /{/) {
+                if ($0 ~ /^[[:space:]]*{[[:space:]]*$/ && block_stack_size > 0 && block_stack[block_stack_size - 1] !~ /{/) {
                     #for syntax { not the same line with if, for, while, switch, case, default
                     block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
                 }
 
-                if ($0 ~ /case\s+.*:|default:|^\s*else\s*{?\s*$/) {
+                if ($0 ~ /case[[:space:]]+.*:|default:|^[[:space:]]*else[[:space:]]*{?[[:space:]]*$/) {
                     block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
                     #print "DB-Add " block_stack[block_stack_size]
                     block_stack_size++;
@@ -199,9 +199,9 @@ function search_func() {
 
 function find_call() {
     find $DIRECTORY -name "*.[ch]" | xargs \
-    awk -v string="$1" '/^(static\s+)?(\w+\s+)(\*\s*)?\w+\s*\([^=<>]*(\))?\s*({)?\s*$/ && !/\selse\s/, /^}/ {
-        if (/^(static\s+)?(\w+\s+)(\*\s*)?\w+\s*\([^=<>]*(\))?\s*({)?\s*$/ && !/\selse\s/) {
-            if (/^(static\s+)?(\w+\s+)(\*\s*)?\w+\s*\([^=<>]*(\))?\s*({)?\s*$/ && !/\selse\s/) {
+    awk -v string="$1" '/^(static[[:space:]]+)?(\w+[[:space:]]+)(\*[[:space:]]*)?\w+[[:space:]]*\([^=<>]*(\))?[[:space:]]*({)?[[:space:]]*$/ && !/[[:space:]]else[[:space:]]/, /^}/ {
+        if (/^(static[[:space:]]+)?(\w+[[:space:]]+)(\*[[:space:]]*)?\w+[[:space:]]*\([^=<>]*(\))?[[:space:]]*({)?[[:space:]]*$/ && !/[[:space:]]else[[:space:]]/) {
+            if (/^(static[[:space:]]+)?(\w+[[:space:]]+)(\*[[:space:]]*)?\w+[[:space:]]*\([^=<>]*(\))?[[:space:]]*({)?[[:space:]]*$/ && !/[[:space:]]else[[:space:]]/) {
                 start_string = "\n" FILENAME " +" FNR ":" $0
                 
     }'
@@ -211,8 +211,8 @@ function find_call() {
 function find_func() {
     #[static] [type] [*] function_name(...)[{] 
     find $DIRECTORY -name "*.[ch]" | xargs \
-    awk -v string="$1" -v content="$VERBOSE" '/^(static\s+)?(\w+\s+)(\*\s*)?\w+\s*\([^=<>]*\)\s*{?\s*$/, /^}/ {
-        if (/^(static\s+)?(\w+\s+)(\*\s*)?\w+\s*\([^=<>]*\)\s*{?\s*$/ && $0 ~ string && !/;/ && /\(.*\)/) {
+    awk -v string="$1" -v content="$VERBOSE" '/^(static[[:space:]]+)?(\w+[[:space:]]+)(\*[[:space:]]*)?\w+[[:space:]]*\([^=<>]*\)[[:space:]]*{?[[:space:]]*$/, /^}/ {
+        if (/^(static[[:space:]]+)?(\w+[[:space:]]+)(\*[[:space:]]*)?\w+[[:space:]]*\([^=<>]*\)[[:space:]]*{?[[:space:]]*$/ && $0 ~ string && !/;/ && /\(.*\)/) {
             print "\n" FILENAME " +" FNR ":" $0
             has_string = 1
         }
@@ -259,7 +259,7 @@ function find_global() {
 # Function to search for the definition of a specific macro
 function find_macro() {
     find $DIRECTORY -name "*.[ch]" | xargs \
-    awk -v macro=$1 '/^[\s\t]*#[\s\t]*define[\s\t]*/ && $0 ~ macro {
+    awk -v macro=$1 '/^[[[:space:]]\t]*#[[[:space:]]\t]*define[[[:space:]]\t]*/ && $0 ~ macro {
         definition = FILENAME " +" FNR ":" $0
         while (/\\$/) {
             getline
