@@ -55,7 +55,9 @@ void checkCondition(int x) {
         printf("x is negative");
         return;
     }
-    if (x > 5) {
+    if (x > 5)
+    {
+
         printf("x is greater than 5\n");
     } else if (x == 5) {
         printf("x is equal to 5\n");
@@ -75,8 +77,8 @@ void checkCondition(int x) {
             }
             default:
                 printf("x is less than 5\n");
-                break;
         }
+        printf("anyway x is less than 5");
     }
 
     // Target string to search for in the script

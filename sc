@@ -129,7 +129,7 @@ function search_func() {
                 }
 
                 # Start block
-                if ($0 ~ /^[[:space:]]*(if|for|while|switch)[[:space:]]*\(.*\)[[:space:]]*{/) {
+                if ($0 ~ /^[[:space:]]*(if|for|while|switch)[[:space:]]*\(.*\)[[:space:]]*{?/) {
 
                     # If previous is an if block and has }, end the if block
                     while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}[[:space:]]*$/)) {
