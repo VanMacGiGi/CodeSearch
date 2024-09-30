@@ -46,6 +46,7 @@ void processData(struct Data d, int isVi) {
             }
         }
     }
+
     checkCondition(d.id); // Call to checkCondition function
 }
 

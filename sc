@@ -88,6 +88,7 @@ function search_func() {
 
                 # End block
                 if ($0 ~ /[[:space:]]+}/) {
+                    #print "DB-Close block: " FILENAME " +" FNR ":" $0;
                     if (block_stack_size > 0) {
 
                         if (block_stack[block_stack_size - 1] ~ /if/) {
@@ -104,26 +105,26 @@ function search_func() {
                                 # remove switch block
                                 while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /break|case|default/)) {
                                     block_stack_size--;
-                                    #print "DB-Remove case"  block_stack[block_stack_size]
+                                    #print "DB-Remove case or default "  block_stack[block_stack_size]
                                 }
                                 block_stack_size--; # remove switch
                                 #print "DB-Remove switch"  block_stack[block_stack_size]
                             }
                         }
-                        else if (block_stack[block_stack_size - 1] ~ /else[[:space:]]*{?[[:space:]]*$/) {
+                        else if (block_stack[block_stack_size - 1] ~ /else[[:space:]]*{[[:space:]]*$/) {
                             # remove if block
-                            while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}/)) {
+                            while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /else|}/)) {
                                 block_stack_size--;
-                                #print "DB-Remove not if"  block_stack[block_stack_size];
+                                #print "DB-Remove not if "  block_stack[block_stack_size];
                                 if (block_stack[block_stack_size - 1] ~ /:[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
                                     block_stack_size--;
-                                    #print "DB-Remove "  block_stack[block_stack_size];
+                                    #print "DB-Remove if "  block_stack[block_stack_size];
                                 }
                             }
                         }
                         else {
                             block_stack_size--;
-                            #print "DB-Remove else "  block_stack[block_stack_size];
+                            #print "DB-Remove: "  block_stack[block_stack_size];
                         }
                     }
                 }
@@ -191,10 +192,10 @@ function search_func() {
             ($0 ~ /^}/) && in_function && (NR > line) {
                 in_function = 0;
                 print FILENAME " +" FNR ":" $0;
-            }' "$source_file" >> /tmp/sc_out.txt
+            }' "$source_file" #>> /tmp/sc_out.txt
         done
     done
-    cat /tmp/sc_out.txt | sort | uniq
+    #cat /tmp/sc_out.txt | sort | uniq
 }
 
 function find_call() {
