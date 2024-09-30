@@ -47,6 +47,10 @@ void processData(struct Data d, int isVi) {
         }
     }
 
+    if (isVi) {
+        printf("Ban dang dung tieng Viet\n");
+    }
+
     checkCondition(d.id); // Call to checkCondition function
 }
 

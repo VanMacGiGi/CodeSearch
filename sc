@@ -129,39 +129,38 @@ function search_func() {
                     }
                 }
 
-                # Start block
-                if ($0 ~ /^[[:space:]]*(if|for|while|switch)[[:space:]]*\(.*\)[[:space:]]*{?/) {
-
-                    # If previous is an if block and has }, end the if block
+                # Detect end of if block and remove from stack
+                if ($0 !~ /else/) {
+                    # only if block has } in stack
                     while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}[[:space:]]*$/)) {
                         block_stack_size--;
                         #print "DB-Remove "  block_stack[block_stack_size];
-                        #if (block_stack[block_stack_size - 1] ~ /^[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
                         if (block_stack[block_stack_size - 1] ~ /:[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
                             block_stack_size--;
                             #print "DB-Remove "  block_stack[block_stack_size];
                         }
                     }
+                }
 
+                # Start block
+                if ($0 ~ /^[[:space:]]*(if|for|while|switch)[[:space:]]*\(.*\)[[:space:]]*{?/) {
                     block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
                     #print "DB-Add "  block_stack[block_stack_size]
                     block_stack_size++;
                 }
-
-                if ($0 ~ /^[[:space:]]*{[[:space:]]*$/ && block_stack_size > 0 && block_stack[block_stack_size - 1] !~ /{/) {
+                else if ($0 ~ /^[[:space:]]*{[[:space:]]*$/ && block_stack_size > 0 && block_stack[block_stack_size - 1] !~ /{/) {
                     #for syntax { not the same line with if, for, while, switch, case, default
                     block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
                 }
-
-                if ($0 ~ /case[[:space:]]+.*:|default:|^[[:space:]]*else[[:space:]]*{?[[:space:]]*$/) {
+                else if ($0 ~ /case[[:space:]]+.*:|default:|^[[:space:]]*else[[:space:]]*{?[[:space:]]*$/) {
                     block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
                     #print "DB-Add " block_stack[block_stack_size]
                     block_stack_size++;
                 }
-
-                if ($0 ~ /break/ && block_stack[block_stack_size - 1] ~ /case|default/) {
+                else if ($0 ~ /break/ && block_stack[block_stack_size - 1] ~ /case|default/) {
                     block_stack[block_stack_size - 1] = block_stack[block_stack_size - 1] "\n" FILENAME " +" FNR ":" $0;
                 }
+
                 if (NR == line) {
                     print func_name
                     if (block_stack[block_stack_size - 1] ~ /case/) {
