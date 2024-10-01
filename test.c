@@ -47,8 +47,13 @@ void processData(struct Data d, int isVi) {
         }
     }
 
-    if (isVi) {
+    if (isVi)
+    {
         printf("Ban dang dung tieng Viet\n");
+    }
+    if (!isVi)
+    {
+        printf("You are using English\n");
     }
 
     checkCondition(d.id); // Call to checkCondition function

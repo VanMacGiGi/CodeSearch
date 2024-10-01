@@ -94,7 +94,7 @@ function search_func() {
                         if (block_stack[block_stack_size - 1] ~ /if/) {
                             # if may continue
                             block_stack[block_stack_size] = FILENAME " +" FNR ":" $0;
-                            #print "DB-Add "  block_stack[block_stack_size]
+                            #print "DB-Add as if may continue"  block_stack[block_stack_size]
                             block_stack_size++;
                         }
                         else if (block_stack[block_stack_size - 1] ~ /case|default/) {
@@ -132,11 +132,13 @@ function search_func() {
                 # Detect end of if block and remove from stack
                 if ($0 !~ /else/) {
                     # only if block has } in stack
-                    while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}[[:space:]]*$/)) {
+                    removed_if = 0;
+                    while ((block_stack_size > 0) && (block_stack[block_stack_size - 1] ~ /}/) && (removed_if == 0)) {
                         block_stack_size--;
-                        #print "DB-Remove "  block_stack[block_stack_size];
-                        if (block_stack[block_stack_size - 1] ~ /:[[:space:]]*if[[:space:]]*\(.*\)[[:space:]]*{/) {
+                        #print "DB-Remove if block"  block_stack[block_stack_size];
+                        if (block_stack[block_stack_size - 1] !~ /}[[:space:]]*$/) {
                             block_stack_size--;
+                            removed_if = 1;
                             #print "DB-Remove "  block_stack[block_stack_size];
                         }
                     }
@@ -191,10 +193,10 @@ function search_func() {
             ($0 ~ /^}/) && in_function && (NR > line) {
                 in_function = 0;
                 print FILENAME " +" FNR ":" $0;
-            }' "$source_file" #>> /tmp/sc_out.txt
+            }' "$source_file" >> /tmp/sc_out.txt
         done
     done
-    #cat /tmp/sc_out.txt | sort | uniq
+    cat /tmp/sc_out.txt | sort | uniq
 }
 
 function find_call() {
