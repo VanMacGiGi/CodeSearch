@@ -5,9 +5,33 @@ logger = logging.getLogger("line")
 
 
 def load_file(file_name):
-    """Utility function to load file content as a list of lines."""
-    with open(file_name, 'r', encoding='utf-8') as f:
-        return f.readlines()
+    """
+    Load file content as a list of lines with multi-encoding support.
+
+    Args:
+        file_name (str): Path to the file
+    Returns:
+        list: Lines from the file
+    """
+    encodings = ['utf-8', 'iso-8859-1', 'utf-16', 'utf-16-le', 'utf-16-be',
+                 'utf-32', 'utf-32-le', 'utf-32-be']
+
+    for encoding in encodings:
+        try:
+            with open(file_name, 'r', encoding=encoding) as f:
+                return f.readlines()
+        except UnicodeDecodeError:
+            continue
+        except IOError as e:
+            logger.error(f"Error reading file {file_name}: {str(e)}")
+            raise
+
+    # If none of the encodings worked
+    raise UnicodeDecodeError(
+        'Unknown', b'', 0, 1,
+        f'Failed to decode {file_name} with any of these encodings: '
+        f'{encodings}'
+    )
 
 
 class Line:

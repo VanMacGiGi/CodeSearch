@@ -1,4 +1,4 @@
-.PHONY: test clean lint
+.PHONY: test clean lint install
 
 test:
 	@echo "Running unit tests..."
@@ -12,3 +12,10 @@ clean:
 	
 lint:
 	flake8 .
+
+install:
+	@echo "Installing..."
+	@chmod +x main.py
+	@mkdir -p $(HOME)/.local/bin
+	@ln -sf $(PWD)/main.py $(HOME)/.local/bin/s
+	@echo "Installed 's' command to $(HOME)/.local/bin/s"
