@@ -60,7 +60,7 @@ class TestLine(unittest.TestCase):
 
     def test_format(self):
         line = Line(self.file_name, 1, "Formatted line\n")
-        expected = f"{self.file_name} +{2:<5}: Formatted line"
+        expected = f"{self.file_name}:{2:<5}: Formatted line"
         self.assertEqual(line.format(), expected)
 
 

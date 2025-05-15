@@ -11,7 +11,7 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	
 lint:
-	flake8 .
+	flake8 --max-line-length=88 .
 
 install:
 	@echo "Installing..."

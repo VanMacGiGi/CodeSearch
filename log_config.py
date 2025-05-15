@@ -4,8 +4,7 @@ import os
 
 def setup_logging(default_level=logging.WARNING):
     logging.basicConfig(
-        level=default_level,
-        format="%(name)-10s - %(levelname)-5s - %(message)s"
+        level=default_level, format="%(name)-10s - %(levelname)-5s - %(message)s"
     )
 
     # Example: LOG_LEVELS="module_a=DEBUG,module_b=INFO"
@@ -21,6 +20,3 @@ def setup_logging(default_level=logging.WARNING):
                 logging.getLogger().setLevel(level)
             else:
                 logging.getLogger(module).setLevel(level)
-
-
-setup_logging()

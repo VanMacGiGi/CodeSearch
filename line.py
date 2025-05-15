@@ -136,4 +136,4 @@ class Line:
         else:
             content = self.content
 
-        return f"{self.file_name} +{self.index + 1:<5}: {content}"
+        return f"{self.file_name}:{self.index + 1:<5}: {content}"

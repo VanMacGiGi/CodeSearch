@@ -3,10 +3,16 @@
 import argparse
 import logging
 import sys
+from log_config import setup_logging
 
 from result import RES
-from utils import find_match_lines
+from utils import find_match_lines, get_wrapper_block
 from registry import Registry
+
+# Import to register it with Registry
+from lang_c_plus import C_Plus  # noqa: F401
+
+setup_logging()
 
 logger = logging.getLogger("main")
 
@@ -38,6 +44,24 @@ def search_wrappers(pattern, file=None, directory=None):
         f"[wrap] Searching wrappers for '{pattern}' in "
         f"{file or ('directory: ' + directory) if directory else 'codebase'}"
     )
+    lines = find_match_lines(pattern, file=file)
+    for line in lines:
+        lang = Registry.get_lang_for(line.file_name)
+        if not lang:  # Skip if no language handler is found
+            continue
+        RES.add(line)
+        content = [line]
+        if lang.is_definition_start(line.content):
+            content = lang.get_definition_block(line, brief=True)
+        else:
+            if lang.is_control_block_start(line.content):
+                content = lang.get_definition_block(line, brief=True)
+        while content:
+            RES.add_list(content)
+            if lang.is_definition_start(content[0].content):
+                logger.info(f"Found definition start: {content[0].content}")
+                break
+            content = get_wrapper_block(content, lang)
 
 
 def search_variable(pattern, file=None, directory=None):
@@ -51,49 +75,41 @@ def search_variable(pattern, file=None, directory=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog='s',
-        description='Smart code search tool'
-    )
+    parser = argparse.ArgumentParser(prog="s", description="Smart code search tool")
 
     parser.add_argument(
-        'target',
-        choices=['def', 'wrap', 'tree', 'type', 'var'],
-        help='Target action: def | wrap | tree | type | var'
+        "target",
+        choices=["def", "wrap", "tree", "type", "var"],
+        help="Target action: def | wrap | tree | type | var",
     )
     parser.add_argument(
-        '-d', '--dir',
-        nargs='?',
-        const='.',
-        help='Search in a directory (default: current)'
+        "-d",
+        "--dir",
+        nargs="?",
+        const=".",
+        help="Search in a directory (default: current)",
     )
+    parser.add_argument("-f", "--file", type=str, help="Search in a specific file")
     parser.add_argument(
-        '-f', '--file',
-        type=str,
-        help='Search in a specific file'
-    )
-    parser.add_argument(
-        'pattern',
-        nargs='?',
-        help='Pattern to match (required for def and wrap)'
+        "pattern", nargs="?", help="Pattern to match (required for def and wrap)"
     )
 
     args = parser.parse_args()
 
     # Dispatch
-    if args.target == 'tree':
+    if args.target == "tree":
         list_tree(file=args.file, directory=args.dir)
-    elif args.target == 'def':
+    elif args.target == "def":
         if not args.pattern:
             print("Error: 'def' target requires a pattern.")
             sys.exit(1)
         search_definitions(args.pattern, file=args.file, directory=args.dir)
-    elif args.target == 'wrap':
+    elif args.target == "wrap":
         if not args.pattern:
             print("Error: 'wrap' target requires a pattern.")
             sys.exit(1)
         search_wrappers(args.pattern, file=args.file, directory=args.dir)
-    elif args.target == 'var':
+    elif args.target == "var":
         if not args.pattern:
             print("Error: 'var' target requires a pattern.")
             sys.exit(1)
@@ -102,5 +118,5 @@ def main():
     RES.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

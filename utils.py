@@ -26,7 +26,7 @@ def find_match_lines(pattern, extensions=['*'], dir='.', file=None):
     lines = []
     for line_text in result.stdout.splitlines(True):
         # line is './filename:line_number:content'
-        logger.info(f"Found: {line_text}")
+        logger.info(f"Found: {line_text.strip()}")
 
         parts = line_text.split(":", 2)
         if len(parts) == 3:
@@ -37,3 +37,44 @@ def find_match_lines(pattern, extensions=['*'], dir='.', file=None):
             lines.append(line)
 
     return lines
+
+
+def get_wrapper_block(block: list[Line], lang):
+    """
+    Extracts a full C++ control block that wraps the given block, the given
+    block is a list of lines.
+    Handles if, else, switch, while, do, for, case, default.
+    """
+
+    if not block:
+        return []
+
+    start_line = block[0]
+    end_line = block[-1]
+    current = start_line.get_prev()
+    logger.info(f"Searching for wrapper block for {start_line.content}")
+
+    while current:
+        if lang.is_control_block_start(current.content):
+            logger.info(f"Found control block start: {current.content}")
+            wrapper_block = lang.get_control_block(current, brief=True)
+            # Check if wrapper block contains our target block by index
+            if (
+                wrapper_block and
+                wrapper_block[0].index <= start_line.index and
+                wrapper_block[-1].index >= end_line.index
+            ):
+                return wrapper_block
+        elif lang.is_definition_start(current.content):
+            wrapper_block = lang.get_definition_block(current, brief=True)
+            # Check if wrapper block contains our target block by index
+            if (
+                wrapper_block and
+                wrapper_block[0].index <= start_line.index and
+                wrapper_block[-1].index >= end_line.index
+            ):
+                return wrapper_block
+        current = current.get_prev()
+
+    # No wrapping block found
+    return []
