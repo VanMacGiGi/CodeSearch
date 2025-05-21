@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import sys
 from log_config import setup_logging
 
 from result import RES
@@ -70,8 +69,7 @@ def search_variable(pattern, file=None, directory=None):
         f"{file or ('directory: ' + directory) if directory else 'codebase'}"
     )
     word_pattern = f"\\b{pattern}\\b"
-    lines = find_match_lines(word_pattern, file=file)
-    RES.add_list(lines)
+    search_wrappers(word_pattern, file, directory)
 
 
 def main():
@@ -79,8 +77,9 @@ def main():
 
     parser.add_argument(
         "target",
-        choices=["def", "wrap", "tree", "type", "var"],
-        help="Target action: def | wrap | tree | type | var",
+        nargs="?",
+        default="wrap",
+        help="Target action (def|wrap|tree|type|var), defaults to wrap",
     )
     parser.add_argument(
         "-d",
@@ -90,29 +89,26 @@ def main():
         help="Search in a directory (default: current)",
     )
     parser.add_argument("-f", "--file", type=str, help="Search in a specific file")
-    parser.add_argument(
-        "pattern", nargs="?", help="Pattern to match (required for def and wrap)"
-    )
+    parser.add_argument("pattern", help="Pattern to search for")
 
     args = parser.parse_args()
+
+    # Check if target is a valid target
+    valid_targets = ["def", "wrap", "tree", "type", "var"]
+    if args.target in valid_targets:
+        args.target = args.target
+    else:
+        args.pattern = args.target
+        args.target = "wrap"
 
     # Dispatch
     if args.target == "tree":
         list_tree(file=args.file, directory=args.dir)
     elif args.target == "def":
-        if not args.pattern:
-            print("Error: 'def' target requires a pattern.")
-            sys.exit(1)
         search_definitions(args.pattern, file=args.file, directory=args.dir)
     elif args.target == "wrap":
-        if not args.pattern:
-            print("Error: 'wrap' target requires a pattern.")
-            sys.exit(1)
         search_wrappers(args.pattern, file=args.file, directory=args.dir)
     elif args.target == "var":
-        if not args.pattern:
-            print("Error: 'var' target requires a pattern.")
-            sys.exit(1)
         search_variable(args.pattern, file=args.file, directory=args.dir)
 
     RES.show()
