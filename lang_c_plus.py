@@ -46,14 +46,14 @@ class C_Plus:
             # ReturnType func(args) { - complete function definition
             (
                 r"^(inline\s+)?(const\s+)?(virtual\s+)?(static\s+)?"
-                r"[\w:<>\*&\s]+\s+[\w:]+\s*\([^=!<>]*\)\s*"
+                r"[\w:<>\*&\s]+\s+[\w:]*[\*&]?[\w:]+\s*\([^=!<>]*\)\s*"
                 r"(const|override|final|noexcept)?\s*({)?(?<!;)$"
             ),
             # Multi-line function declaration that continues on next line
             # static const char* func_name(const char* param1, const char* param2
             (
                 r"^(inline\s+)?(const\s+)?(virtual\s+)?(static\s+)?"
-                r"[\w:<>\*&\s]+\s+[\w:]+\s*\([^=!<>;{})]*$"
+                r"[\w:<>\*&\s]+\s+[\w:]*[\*&]?[\w:]+\s*\([^=!<>;{})]*$"
             ),
             # define MACRO
             r"^#\s*define\s+\w+",
